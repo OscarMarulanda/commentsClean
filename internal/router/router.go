@@ -20,6 +20,7 @@ func SetupRouter(userHandler *handler.UserHandler, noteHandler *handler.NoteHand
 	// Note routes
 	protected := api.PathPrefix("").Subrouter()
 	protected.Use(middleware.JWTAuth)
+	protected.HandleFunc("/notes/search", noteHandler.Search).Methods("GET")
 	protected.HandleFunc("/notes", noteHandler.GetAll).Methods("GET")
 	protected.HandleFunc("/notes", noteHandler.Create).Methods("POST")
 	protected.HandleFunc("/notes", noteHandler.Update).Methods("PUT")

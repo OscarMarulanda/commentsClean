@@ -36,6 +36,29 @@ func (h *NoteHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(notes)
 }
 
+func (h *NoteHandler) Search(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.ExtractUserID(r)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	keyword := r.URL.Query().Get("keyword")
+	if keyword == "" {
+		http.Error(w, "keyword query param required", http.StatusBadRequest)
+		return
+	}
+
+	notes, err := h.usecase.SearchNotes(userID, keyword)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(notes)
+}
+
 func (h *NoteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.ExtractUserID(r)
 	if !ok {

@@ -10,6 +10,7 @@ type NoteRepository interface {
 	Create(note *domain.Note) error
 	Update(note *domain.Note) error
 	Delete(id int) error
+	SearchByKeyword(userID int, keyword string) ([]domain.Note, error)
 }
 
 type noteRepository struct {
@@ -22,6 +23,30 @@ func NewNoteRepository(db *sql.DB) NoteRepository {
 
 func (r *noteRepository) GetAllByUser(userID int) ([]domain.Note, error) {
 	rows, err := r.db.Query(`SELECT id, title, content, user_id, created_at, updated_at, deleted_at FROM notes WHERE user_id=$1 AND deleted_at IS NULL`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var notes []domain.Note
+	for rows.Next() {
+		var n domain.Note
+		if err := rows.Scan(&n.ID, &n.Title, &n.Content, &n.UserID, &n.CreatedAt, &n.UpdatedAt, &n.DeletedAt); err != nil {
+			return nil, err
+		}
+		notes = append(notes, n)
+	}
+	return notes, nil
+}
+
+func (r *noteRepository) SearchByKeyword(userID int, keyword string) ([]domain.Note, error) {
+	query := `
+		SELECT id, title, content, user_id, created_at, updated_at, deleted_at
+		FROM notes
+		WHERE user_id=$1 AND deleted_at IS NULL
+		AND (title ILIKE '%' || $2 || '%' OR content ILIKE '%' || $2 || '%')
+	`
+	rows, err := r.db.Query(query, userID, keyword)
 	if err != nil {
 		return nil, err
 	}

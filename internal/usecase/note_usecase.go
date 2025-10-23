@@ -12,6 +12,7 @@ type NoteUseCase interface {
 	Create(note *domain.Note) error
 	Update(note *domain.Note) error
 	Delete(noteID int, userID int) error
+	SearchNotes(userID int, keyword string) ([]domain.Note, error)
 }
 
 type noteUseCase struct {
@@ -24,6 +25,13 @@ func NewNoteUseCase(r repository.NoteRepository) NoteUseCase {
 
 func (n *noteUseCase) GetNotesByUser(userID int) ([]domain.Note, error) {
 	return n.repo.GetAllByUser(userID)
+}
+
+func (n *noteUseCase) SearchNotes(userID int, keyword string) ([]domain.Note, error) {
+	if keyword == "" {
+		return nil, errors.New("keyword is required")
+	}
+	return n.repo.SearchByKeyword(userID, keyword)
 }
 
 func (n *noteUseCase) Create(note *domain.Note) error {
